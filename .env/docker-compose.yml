@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+    app:
+        build:
+            context: .env/app
+            dockerfile: Dockerfile
+        links:
+            - mysql:mysql
+        environment:
+            PHP_IDE_CONFIG: "serverName=docker"
+            APP_DIR: "/code/src"
+        volumes:
+            - "${PWD}/src:/code"
+#            - ".env/app/run.sh:/run.sh"qw
+            - "${PWD}/var/log/app:/var/log:cached"
+        networks:
+            - network
+#        command:  /run.sh
+    httpd:
+        image: nginx:latest
+        links:
+            - app
+        volumes:
+            - ".env/site.conf:/etc/nginx/conf.d/default.conf"
+            - "${PWD}/src:/code"
+            - "${PWD}/var/log/nginx:/var/log/nginx:cached"
+        networks:
+              - network
+        ports:
+              - "127.0.0.1:8080:80" #127.0.0.1:
+
+    mysql:
+        image: mysql:5.7
+        environment:
+            MYSQL_ROOT_PASSWORD: db_root_password
+            MYSQL_DATABASE: application
+            MYSQL_USER: application_user
+            MYSQL_PASSWORD: application_password
+        volumes:
+            - "${PWD}/var/mysql:/var/lib/mysql:cached"
+            - "${PWD}/var/log/mysql:/var/log/mysql:cached"
+        networks:
+            - network
+        ports:
+            - "127.0.0.1:3306:3306"
+networks:
+    network:
